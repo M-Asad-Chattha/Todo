@@ -8,9 +8,10 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
 
     // Intances and variables
     var categories: Results<Category>?
@@ -20,17 +21,35 @@ class CategoryViewController: UITableViewController {
         super.viewDidLoad()
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
+        tableView.rowHeight = 80.0
+        tableView.separatorStyle = .none
+        
         loadCategories()
+    }
+    
+    
+    override func viewWillAppear(_ animated: Bool) {
+        
+        guard let navBar = navigationController?.navigationBar else { fatalError() }
+        
+        navBar.largeTitleTextAttributes = [NSAttributedStringKey.foregroundColor : UIColor.white]
+    
     }
 
     // MARK: - TableView DataSouce Methods
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        cell.textLabel?.text = categories?[indexPath.row].name ?? "You have empty Category list"
+                
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
+        let cellColor = categories?[indexPath.row].color ?? "#1D9BF6"
+        cell.textLabel?.text = categories?[indexPath.row].name ?? "You have empty Category list"
+        cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn: UIColor(hexString: cellColor), isFlat: true)
+        
+        cell.backgroundColor = UIColor(hexString: cellColor)
         return cell
     }
+    
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return categories?.count ?? 1
@@ -65,6 +84,7 @@ class CategoryViewController: UITableViewController {
         
             let newCategory = Category()
             newCategory.name = textField.text!
+            newCategory.color = UIColor.randomFlat().hexValue()
             
             self.save(category: newCategory)
             
@@ -79,6 +99,23 @@ class CategoryViewController: UITableViewController {
         }
         present(alert, animated: true, completion: nil)
         
+    }
+    
+    
+    // Delete Category Cell
+    
+    override func updateModel(at indexPath: IndexPath) {
+        
+        if let categoryForDeletion = self.categories?[indexPath.row]{
+
+            do {
+                try self.realm.write {
+                    self.realm.delete(categoryForDeletion)
+                }
+            } catch {
+                print("Error deleting Category cell: \(error)")
+            }
+        }
     }
     
     
@@ -107,3 +144,14 @@ class CategoryViewController: UITableViewController {
     }
     
 }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
